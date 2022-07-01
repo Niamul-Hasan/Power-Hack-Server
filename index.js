@@ -10,7 +10,7 @@ app.use(express.json());
 
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion,ObjectId } = require('mongodb');
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.vzmig.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -25,15 +25,34 @@ async function run(){
 
         // api for inserting billing_list
 
-        app.post('/api/billing-list',async(req,res)=>{
+        app.post('/api/add-billing',async(req,res)=>{
             const bills=req.body;
             const billingList=await billingCollection.insertOne(bills);
             res.send({data:billingList});
           });
+
+          //api for collecting billing list
         app.get('/api/billing-list',async(req,res)=>{
-            const billingList=await billingCollection.find().toArray();
-            res.send({data:billingList});
+            const limit=Number(req.query.limit);
+            const pageNo=Number(req.query.pageNumber);
+
+            const body=req.query;
+            console.log(body);
+
+            const count=await billingCollection.estimatedDocumentCount();
+            
+            const billingList=await billingCollection.find().skip(limit*pageNo).limit(limit).toArray();
+            res.send({data:billingList,count:count});
           });
+
+          //api for delete bill
+          app.delete('/api/delete-billing/:id',async(req,res)=>{
+            const id =req.params.id;
+            const filter={_id:ObjectId(id)};
+            const deletedBill=await billingCollection.deleteOne(filter);
+            res.send(deletedBill);
+          })
+
 
 
     }
