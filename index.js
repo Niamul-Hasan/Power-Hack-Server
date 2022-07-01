@@ -36,13 +36,11 @@ async function run(){
             const limit=Number(req.query.limit);
             const pageNo=Number(req.query.pageNumber);
 
-            const body=req.query;
-            console.log(body);
-
             const count=await billingCollection.estimatedDocumentCount();
             
             const billingList=await billingCollection.find().skip(limit*pageNo).limit(limit).toArray();
-            res.send({data:billingList,count:count});
+            const billing=await billingCollection.find().toArray();
+            res.send({data:billingList,count:count, billing});
           });
 
           //api for delete bill
@@ -51,6 +49,19 @@ async function run(){
             const filter={_id:ObjectId(id)};
             const deletedBill=await billingCollection.deleteOne(filter);
             res.send(deletedBill);
+          })
+
+          //api for updating bill
+          app.put('/api/updating-billing/:id',async(req,res)=>{
+            const id=req.params.id;
+            const filter={_id:ObjectId(id)};
+            const option={upsert:true};
+            const billData=req.body;
+            const updateDoc = {
+              $set: billData
+            };
+            const updateBill=await billingCollection.updateOne(filter,updateDoc,option);
+            res.send(updateBill);
           })
 
 
